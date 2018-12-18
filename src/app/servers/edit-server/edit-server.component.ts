@@ -1,18 +1,21 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Params } from '@angular/router';
+import { CanComponentDeactivate } from './can-deactivate.service';
+import { Observable } from 'rxjs/Observable';
 
 import { ServersService } from '../servers.service';
-import { ActivatedRoute, Params } from '@angular/router';
 
 @Component({
   selector: 'app-edit-server',
   templateUrl: './edit-server.component.html',
   styleUrls: ['./edit-server.component.css']
 })
-export class EditServerComponent implements OnInit {
+export class EditServerComponent implements OnInit, CanComponentDeactivate {
   server: { id: number, name: string, status: string };
   serverName = '';
   serverStatus = '';
   allowEdit = false;
+  isSaved = false;
 
   constructor(private serversService: ServersService, private routes: ActivatedRoute) { }
 
@@ -37,6 +40,19 @@ export class EditServerComponent implements OnInit {
 
   onUpdateServer() {
     this.serversService.updateServer(this.server.id, { name: this.serverName, status: this.serverStatus });
+    this.isSaved = true;
+  }
+
+  canDeactivate(): Observable<boolean> | Promise<boolean> | boolean {
+    if(!this.allowEdit) {
+      return true;
+    }
+
+    if((this.serverName !== this.server.name || this.serverStatus !== this.server.status) && !this.isSaved) {
+      return confirm("Do You want to discard the changes?");
+    } else {
+      return true;
+    }
   }
 
 }
